@@ -14,17 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,13 +33,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -52,6 +53,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ChainStyle
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintSet
+import androidx.constraintlayout.compose.Dimension
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -60,7 +65,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ScaffoldStyling()
+            Lists()
 
         }
     }
@@ -71,7 +76,6 @@ fun ImageCard(
     painter: Painter,
     contentDescription: String,
     title: String,
-    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = Modifier
@@ -259,10 +263,82 @@ fun StateChange(updateColor: (Color) -> Unit, color: Color) {
 
 }
 
+@Composable
+fun Lists() {
+    val scrollState = rememberScrollState()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        itemsIndexed(
+            listOf("This", "is", "Jetpack", "Compose")
+        ) { index, item ->
+            Text(
+                text =
+                if (item.contentEquals("Compose")) {
+                    item + " is cool!"
+                } else {
+                    item
+                },
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+//        items(5000){
+//            Text(
+//                text = "Hello $it!",
+//                textAlign = TextAlign.Center,
+//                fontWeight = FontWeight.Bold,
+//                fontSize = 24.sp,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(16.dp)
+//            )
+//        }
+    }
+}
+
+@Composable
+fun ConstraintLayoutStyle() {
+    val constraints = ConstraintSet {
+        val greenBox = createRefFor("greenbox")
+        val redBox = createRefFor("redbox")
+        val guideline = createGuidelineFromTop(.3f)
+
+
+        constrain(greenBox) {
+            top.linkTo(guideline)
+            start.linkTo(parent.start)
+            end.linkTo(redBox.start)
+            width = Dimension.percent(.4f)
+            height = Dimension.value(100.dp)
+        }
+
+        constrain(redBox) {
+            top.linkTo(guideline)
+            start.linkTo(greenBox.end)
+            end.linkTo(parent.end)
+            width = Dimension.percent(.4f)
+            height = Dimension.value(100.dp)
+        }
+
+        createHorizontalChain(greenBox,redBox, chainStyle = ChainStyle.SpreadInside)
+    }
+
+    ConstraintLayout(constraints, modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.background(Color.Green).layoutId("greenbox"))
+        Box(modifier = Modifier.background(Color.Red).layoutId("redbox"))
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    ScaffoldStyling()
+    ConstraintLayoutStyle()
 
 
 }
