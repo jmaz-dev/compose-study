@@ -3,24 +3,41 @@ package com.example.composecourseyt
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Spacer
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -28,6 +45,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layoutId
@@ -57,6 +76,9 @@ import androidx.constraintlayout.compose.ChainStyle
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
+import com.example.composecourseyt.ui.HomeScreen
+import com.example.composecourseyt.ui.theme.MeditationUIYouTubeTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -65,9 +87,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Lists()
-
+            val chipList = listOf("Sweet sleep", "Insomnia", "Depression")
+            MeditationUIYouTubeTheme {
+                HomeScreen(chipList)
+            }
         }
+
     }
 }
 
@@ -229,14 +254,22 @@ fun ScaffoldStyling() {
 }
 
 @Composable
-fun StateChange(updateColor: (Color) -> Unit, color: Color) {
+fun StateChange() {
+    var colorState by remember {
+        mutableStateOf(Color.Red)
+    }
+
+    fun updateColor(color: Color) {
+        colorState = color
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier
             .background(
-                if (color == Color.Yellow) {
-                    color.copy(red = 1f, green = 0f, blue = 0f, alpha = 1f)
+                if (colorState == Color.Yellow) {
+                    colorState.copy(red = 1f, green = 0f, blue = 0f, alpha = 1f)
                 } else {
-                    color.copy(alpha = .5f)
+                    colorState.copy(alpha = .5f)
                 }
             )
             .fillMaxSize()
@@ -256,7 +289,7 @@ fun StateChange(updateColor: (Color) -> Unit, color: Color) {
             modifier = Modifier
                 .fillMaxSize()
                 .weight(1f)
-                .background(color)
+                .background(colorState)
         )
 
     }
@@ -326,19 +359,113 @@ fun ConstraintLayoutStyle() {
             height = Dimension.value(100.dp)
         }
 
-        createHorizontalChain(greenBox,redBox, chainStyle = ChainStyle.SpreadInside)
+        createHorizontalChain(greenBox, redBox, chainStyle = ChainStyle.SpreadInside)
     }
 
     ConstraintLayout(constraints, modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.background(Color.Green).layoutId("greenbox"))
-        Box(modifier = Modifier.background(Color.Red).layoutId("redbox"))
+        Box(
+            modifier = Modifier
+                .background(Color.Green)
+                .layoutId("greenbox")
+        )
+        Box(
+            modifier = Modifier
+                .background(Color.Red)
+                .layoutId("redbox")
+        )
+    }
+}
+
+@Composable
+fun SimpleAnimations() {
+    var sizeState by remember {
+        mutableStateOf(200.dp)
+    }
+    // Size Animation
+    val size by animateDpAsState(
+        targetValue = sizeState,
+        label = "Increase size",
+        animationSpec = tween(
+            durationMillis = 1000,
+            delayMillis = 200,
+            easing = LinearOutSlowInEasing
+        )
+    )
+    // Infinite animation
+    val infiniteTransition = rememberInfiniteTransition()
+    val color by infiniteTransition.animateColor(
+        initialValue = Color.Red,
+        targetValue = Color.Green,
+        animationSpec = infiniteRepeatable(
+            tween(
+                durationMillis = 2000
+            ),
+            repeatMode = RepeatMode.Reverse
+        ), label = "background color"
+    )
+    Box(
+        modifier = Modifier
+            .size(size)
+            .background(color),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(
+            onClick = { sizeState += 40.dp },
+            shape = RoundedCornerShape(corner = CornerSize(6.dp))
+        ) {
+            Text("Increase size")
+        }
+    }
+}
+
+@Composable
+fun IndeterminateCircularIndicator() {
+
+    suspend fun loadProgress(updateProgress: (Float) -> Unit) {
+        for (i in 1..100) {
+            updateProgress(i.toFloat() / 100)
+            delay(10)
+        }
+    }
+
+    var currentProgress by remember { mutableStateOf(0f) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope() // Create a coroutine scope
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Button(onClick = {
+            loading = true
+            scope.launch {
+                loadProgress { progress ->
+                    currentProgress = progress
+                }
+                loading = false // Reset loading when the coroutine finishes
+            }
+        }, enabled = !loading) {
+            Text("Start loading")
+        }
+
+        if (loading) {
+            Text(text = currentProgress.toString())
+            CircularProgressIndicator(
+                progress = { currentProgress },
+                strokeCap = StrokeCap.Round,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    ConstraintLayoutStyle()
+    Column(modifier = Modifier.fillMaxSize()) {
+        IndeterminateCircularIndicator()
+    }
 
 
 }
