@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,10 +32,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
@@ -402,21 +404,25 @@ fun FeatureItem(
 }
 
 @Composable
-fun BottomMenu(items: List<BottomMenu>, modifier: Modifier = Modifier) {
+fun BottomMenu(items: List<BottomMenu>, modifier: Modifier) {
     var selectedItemIndex by remember {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
-
     Row(
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(DeepBlue)
             .padding(15.dp)
     ) {
+        //  o selectedItem terá sempre o index do botão clicado, e na montagem do item
+        // o selected será afetado de acordo com o index do item clicado
         items.forEachIndexed { index, bottomMenu ->
-            BottomMenuItem(bottomMenu)
+            BottomMenuItem(bottomMenu, selected = index == selectedItemIndex) {
+                val s = ""
+                selectedItemIndex = index
+            }
         }
 
     }
@@ -424,17 +430,44 @@ fun BottomMenu(items: List<BottomMenu>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BottomMenuItem(item: BottomMenu) {
-    Box(
-        modifier = Modifier
+fun BottomMenuItem(item: BottomMenu, selected: Boolean = false, onItemClick: () -> Unit) {
+    Column(
+        modifier = Modifier.height(64.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(id = item.icon),
-            contentDescription = item.title,
-            tint = AquaBlue
-        )
-        Text(text = item.title)
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(Shapes.small)
+                .background(
+                    if (selected) {
+                        ButtonBlue
+                    } else {
+                        Color.Transparent
+                    }
+                )
+                .clickable {
+                    onItemClick()
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(id = item.icon),
+                contentDescription = item.title,
+                tint = (
+                        if (selected) {
+                            TextWhite
+                        } else {
+                            AquaBlue
+                        }
+                        ),
+                modifier = Modifier
+                    .size(22.dp)
+            )
+        }
+        Text(text = item.title, style = MaterialTheme.typography.body1)
     }
 }
 
